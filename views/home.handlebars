@@ -1,0 +1,57 @@
+<div class="mui-col-md-12 mui-col-xs-12">
+    <div class="mui-col-md-offset-3 mui-col-md-6 mui-panel">
+        <form action="/{{pageid}}/newsession" method="POST" class="mui-form--inline">
+            <legend>Create New Group</legend>
+            <div class="mui-textfield newGrpInput">
+                <label>Group Title</label>
+                <input type="text" name="grouptitle" />
+            </div>
+            <div class="mui-textfield newGrpInput">
+                <label>Group Description</label>
+                <input type="text" name="groupdesc" />
+            </div>
+            <button type="submit" class="mui-btn mui-btn--primary" id="add-group">Add Group</button>
+        </form>
+        {{#if newgrouperror}}
+            <div class="error-text mui--text-subhead">Title required for new group</div>
+        {{/if}}
+    </div>
+</div>
+<div class="mui-divider mui-col-md-12 mui-col-xs-12" id="group-divider"></div>
+{{#if newlinkerror}}
+    <div class="error-text mui--text-headline mui-panel mui-col-md-12 mui-col-xs-12 mui--text-center">URL required</div>
+{{/if}}
+{{#each groupcolumns}}
+    <div class="mui-col-md-4">
+        {{#each this}}
+            <div class="mui-panel link-panel">
+                <div class="mui--text-title wrap">{{title}}</div>
+                <div class="mui--text-caption wrap">{{description}}</div>
+                <div>
+                    <form action="/{{../../pageid}}/{{id}}/addlink" method="POST" class="createLinkForm">
+                        <div class="mui-textfield">
+                            <input type="text" name="newlinktitle" placeholder="Title" />
+                        </div>
+                        <div class="mui-textfield">
+                            <input type="text" name="newlinkurl" placeholder="URL" />
+                        </div>
+                        <button type="submit" class="mui-btn mui-btn--small mui-btn--primary">Add Link</button>
+                        <input type="hidden" name="linksessionid" value={{id}} />
+                    </form>
+                </div>
+                {{#if links}}
+                    <div class="mui-divider" id="link-divider"></div>
+                {{/if}}
+                {{#each links}}
+                    <div class="truncate">
+                        {{#if title}}
+                            <a href={{url}} class="groupLink">{{title}}</a>
+                        {{else}}
+                            <a href={{url}} class="groupLink">{{url}}</a>
+                        {{/if}}
+                    </div>
+                {{/each}}
+            </div>
+        {{/each}}
+    </div>
+{{/each}}
