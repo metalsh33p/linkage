@@ -1,5 +1,4 @@
 var express = require('express'),
-    config = require('./config.js'),
     connect = require('connect'),
     fs = require ('fs'),
     shortid = require('shortid'),
@@ -14,8 +13,6 @@ var newLinkError = false;
 var app = express();
 
 app.use(compression());
-
-var appConfig = config.DEFAULTS;
 
 // set up handlebars view engine
 var handlebars = require('express-handlebars').create({
@@ -112,7 +109,7 @@ app.get('/', function(req, res){
     };
     longId.generate(idOptions, function(err, result){
         console.log('pageid: ' + result.join('_'));
-        res.render('home', { pageid: result.join('_') });
+        res.render('home', { pageid: result.join('_'), newsite: true });
     });
 });
 

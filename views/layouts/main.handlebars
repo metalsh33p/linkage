@@ -10,14 +10,20 @@
     <body>
         <div class="mui-col-md-12 mui-col-xs-12" id="header">
             {{!-- <div class="mui-col-md-2"> --}}
-            <span class="mui-col-md-2 mui-col-md-offset-5 mui-col-xs-1 mui--text-center" id="linkage-link">
-                <a href="/">linkage</a>
+            <span class="mui-col-md-2 mui-col-md-offset-5 mui-col-xs-1 mui--text-center">
+                <a href="/" id="linkage-link">linkage</a>
             </span>
             <span class="mui-col-md-4 mui-col-md-offset-0 mui-col-xs-5 mui-col-xs-offset-3 mui--text-right" id="header-links">
-                <a href="#">about</a>
+                <a href="#">examples</a>
                 <a id="faqs-link" href="#">faqs</a>
             </span>
         </div>
+            {{#if newsite}}
+                <div class="mui--text-body2 mui--text-center mui-panel">
+                    Create a collection of bookmarks that can be accessed, updated, and shared by a unique URL with no account or password needed.
+                    Check out the <a href="/examples" id="intro-link">example</a> page to get inspired or get started below now!
+                </div>
+            {{/if}}
         <div class="mui-container">
             {{{body}}}
         </div>
