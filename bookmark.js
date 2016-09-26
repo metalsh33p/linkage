@@ -14,7 +14,8 @@ app.use(compression());
 // Error Checks
 var newGroupError = false,
     newLinkError = false,
-    validEmail = true;
+    validEmail = true,
+    editCollection = false;
 
 // Set up page id options
 var longId = new xkcdPassword(),
@@ -171,6 +172,13 @@ app.get('/:pageid', function(req, res){
     });
 });
 
+app.post('/:pageid/editcollection', function(req, res){
+    if (req.body.editsdone === "false") {
+        editCollection = true;
+    }
+    res.redirect(303, '/' + req.params.pageid)
+});
+
 app.post('/:pageid/newsession', function(req, res){
 
     var newSessionId = shortid.generate();
@@ -232,6 +240,30 @@ app.post('/:pageid/:sessionid/addlink', function(req, res){
     }
 
 });
+
+app.post('/:pageid/:sessionid/deletegroup', function(req, res){
+    
+    db.serialize(function() {
+        db.run("DELETE FROM link WHERE linksession = (?)", [ req.params.sessionid ], function(err) {
+            db.run("DELETE FROM session WHERE sessionid = (?)", [ req.params.sessionid ], function(err) {
+                editCollection = true;
+                res.redirect(303, '/' + req.params.pageid);
+            });
+        })
+    });
+
+});
+
+app.post('/:pageid/:sessionid/deletelink', function(req, res){
+    console.log('in delete link sessionid: ' + req.params.sessionid + ' linkid: ' + req.body.linkid);
+    db.serialize(function() {
+        db.run("DELETE FROM link WHERE linkid = (?) AND linksession = (?)", [ req.body.linkdelid, req.params.sessionid ], function(err) {
+            editCollection = true;
+            res.redirect(303, '/' + req.params.pageid);
+        });
+    });
+    
+})
 
 app.post('/:pageid/sendlink', function(req, res){
 
@@ -345,5 +377,14 @@ function renderHomeContext(groups, pageId){
         context.emailerror = true;
         validEmail = true;
     }
+
+    if (editCollection) {
+        context.editcollection = true;
+        context.editcollectiontext = "Done Editing";
+        editCollection = false;
+    } else {
+        context.editcollectiontext = "Edit Collection";
+    }
+
     return context;
 }

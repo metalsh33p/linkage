@@ -21,12 +21,12 @@
     word-wrap: break-word;
 }
 #group-divider {
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 #link-divider {
     margin-top: 10px;
     margin-bottom: 10px;
-}
+} 
 #header-links {
     padding-left: 15px;
 }
@@ -39,7 +39,7 @@
     }
 }
 .error-text {
-    color: #dd5252;
+    color: #F44336;
 }
 #linkage-link {
     color: #e6e6e6;
@@ -54,4 +54,7 @@
 }
 #email-field {
     width: 85%;
+}
+.delete-link { 
+    margin-top: 10px !important;
 }

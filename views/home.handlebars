@@ -10,7 +10,7 @@
                 <label id="group_desc_label">Group Description</label>
                 <input type="text" name="groupdesc" aria-labelledby="group_desc_label"/>
             </div>
-            <button type="submit" class="mui-btn mui-btn--primary" id="add-group">Add Group</button>
+            <button type="submit" class="mui-btn" id="add-group">Add Group</button>
         </form>
         {{#if newgrouperror}}
             <div class="error-text mui--text-subhead">Title required for new group</div>
@@ -23,7 +23,7 @@
                     <label id="email_label">Email your collection</label>
                     <input type="text" name="emails" aria-labelledby="email_label" placeholder="Separate multiple emails with a ','" />
                 </div>
-                <button type="submit" class="mui-btn mui-btn--primary mui-btn--small" id="email-link">Send</button>
+                <button type="submit" class="mui-btn mui-btn--small" id="email-link">Send</button>
             </form>
         {{#if emailerror}}
             <div class="error-text">Error sending- verify email(s)</div>
@@ -32,14 +32,26 @@
     {{/if}}
 </div>
 <div class="mui-divider mui-col-md-12 mui-col-xs-12" id="group-divider"></div>
+{{#if groupcolumns}}
+    <div class="mui--text-center">
+        <form action="/{{pageid}}/editcollection" method="POST">
+            {{#if editcollection}}
+                <input type="hidden" name="editsdone" value="true">
+            {{else}}
+                <input type="hidden" name="editsdone" value="false">
+            {{/if}}
+            <button type="submit" class="mui-btn mui-btn--primary mui-btn--small">{{editcollectiontext}}</button>
+        </form>
+    </div>
+{{/if}}
 {{#if newlinkerror}}
-    <div class="error-text mui--text-headline mui-panel mui-col-md-12 mui-col-xs-12 mui--text-center">URL required</div>
+    <div class="error-text mui--text-headline mui-panel mui-col-md-offset-1 mui-col-xs-offset-1 mui-col-md-10 mui-col-xs-10 mui--text-center">URL required</div>
 {{/if}}
 {{#each groupcolumns}}
     <div class="mui-col-md-4">
         {{#each this}}
             <div class="mui-panel link-panel">
-                {{#if editcollection}}
+                {{#if ../../editcollection}}
                     <form action="/{{../../pageid}}/{{id}}/deletegroup" method="POST" class="mui-form--inline">
                         <input type="hidden" name="linkgroupid" value={{id}} />
                         <button type="submit" class="mui-btn mui-btn--danger mui-btn--small">Delete Group</button>
@@ -55,24 +67,34 @@
                         <div class="mui-textfield">
                             <input type="text" name="newlinkurl" placeholder="URL" aria-label="New Link URL"/>
                         </div>
-                        <button type="submit" class="mui-btn mui-btn--small mui-btn--primary">Add Link</button>
+                        <button type="submit" class="mui-btn mui-btn--small">Add Link</button>
                     </form>
                 </div>
                 {{#if links}}
                     <div class="mui-divider" id="link-divider"></div>
                 {{/if}}
                 {{#each links}}
-                    <div class="truncate">
-                        <form action="/{{../../pageid}}/{{id}}/deletelink" method="POST" class="mui-form--inline">
-                            <input type="hidden" name="linkdelid" value={{linkid}} />
-                            <button type="submit" class="mui-btn mui-btn--danger mui-btn--small">X</button>
-                        </form>
-                        {{#if title}}
-                            <a href={{url}} class="groupLink">{{title}}</a>
-                        {{else}}
-                            <a href={{url}} class="groupLink">{{url}}</a>
-                        {{/if}}
-                    </div>
+                    {{#if ../../../editcollection}}
+                        <div class="truncate">
+                            <form action="/{{../../../pageid}}/{{../id}}/deletelink" method="POST" class="mui-form--inline">
+                                <input type="hidden" name="linkdelid" value={{linkid}} />
+                                <button type="submit" class="mui-btn mui-btn--small mui-btn--fab mui-btn--danger delete-link" aria-label="Delete Link">X</button>
+                                {{#if title}}
+                                    <a href={{url}} class="groupLink">{{title}}</a>
+                                {{else}}
+                                    <a href={{url}} class="groupLink">{{url}}</a>
+                                {{/if}}
+                            </form>
+                        </div>
+                    {{else}}
+                        <div class="truncate">
+                            {{#if title}}
+                                <a href={{url}} class="groupLink">{{title}}</a>
+                            {{else}}
+                                <a href={{url}} class="groupLink">{{url}}</a>
+                            {{/if}}
+                        </div>
+                    {{/if}}
                 {{/each}}
             </div>
         {{/each}}
