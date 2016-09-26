@@ -41,11 +41,17 @@
 .error-text {
     color: #dd5252;
 }
+#linkage-link {
+    color: #e6e6e6;
+}
 #linkage-link:hover, linkage-link:focus  {
   text-decoration: none;
-  font-weight: bolder;
+  color: #ffffff;
 }
 #intro-link {
   text-decoration: none;
   color: #2196F3;
+}
+#email-field {
+    width: 85%;
 }

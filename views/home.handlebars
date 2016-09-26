@@ -3,12 +3,12 @@
         <form action="/{{pageid}}/newsession" method="POST" class="mui-form--inline">
             <legend>Create New Group</legend>
             <div class="mui-textfield newGrpInput">
-                <label>Group Title</label>
-                <input type="text" name="grouptitle" />
+                <label id="group_title_label">Group Title</label>
+                <input type="text" name="grouptitle" aria-labelledby="group_title_label"/>
             </div>
             <div class="mui-textfield newGrpInput">
-                <label>Group Description</label>
-                <input type="text" name="groupdesc" />
+                <label id="group_desc_label">Group Description</label>
+                <input type="text" name="groupdesc" aria-labelledby="group_desc_label"/>
             </div>
             <button type="submit" class="mui-btn mui-btn--primary" id="add-group">Add Group</button>
         </form>
@@ -16,6 +16,20 @@
             <div class="error-text mui--text-subhead">Title required for new group</div>
         {{/if}}
     </div>
+    {{#if groupcolumns}}
+        <div class="mui-col-md-offset-3 mui-col-md-6 mui-panel">
+            <form action="/{{pageid}}/sendlink" method="POST" class="mui-form--inline">
+                <div class="mui-textfield" id="email-field">
+                    <label id="email_label">Email your collection</label>
+                    <input type="text" name="emails" aria-labelledby="email_label" placeholder="Separate multiple emails with a ','" />
+                </div>
+                <button type="submit" class="mui-btn mui-btn--primary mui-btn--small" id="email-link">Send</button>
+            </form>
+        {{#if emailerror}}
+            <div class="error-text">Error sending- verify email(s)</div>
+        {{/if}}
+        </div>
+    {{/if}}
 </div>
 <div class="mui-divider mui-col-md-12 mui-col-xs-12" id="group-divider"></div>
 {{#if newlinkerror}}
@@ -25,18 +39,23 @@
     <div class="mui-col-md-4">
         {{#each this}}
             <div class="mui-panel link-panel">
+                {{#if editcollection}}
+                    <form action="/{{../../pageid}}/{{id}}/deletegroup" method="POST" class="mui-form--inline">
+                        <input type="hidden" name="linkgroupid" value={{id}} />
+                        <button type="submit" class="mui-btn mui-btn--danger mui-btn--small">Delete Group</button>
+                    </form>
+                {{/if}}
                 <div class="mui--text-title wrap">{{title}}</div>
                 <div class="mui--text-caption wrap">{{description}}</div>
                 <div>
                     <form action="/{{../../pageid}}/{{id}}/addlink" method="POST" class="createLinkForm">
                         <div class="mui-textfield">
-                            <input type="text" name="newlinktitle" placeholder="Title" />
+                            <input type="text" name="newlinktitle" placeholder="Title" aria-label="New Link Title"/>
                         </div>
                         <div class="mui-textfield">
-                            <input type="text" name="newlinkurl" placeholder="URL" />
+                            <input type="text" name="newlinkurl" placeholder="URL" aria-label="New Link URL"/>
                         </div>
                         <button type="submit" class="mui-btn mui-btn--small mui-btn--primary">Add Link</button>
-                        <input type="hidden" name="linksessionid" value={{id}} />
                     </form>
                 </div>
                 {{#if links}}
@@ -44,6 +63,10 @@
                 {{/if}}
                 {{#each links}}
                     <div class="truncate">
+                        <form action="/{{../../pageid}}/{{id}}/deletelink" method="POST" class="mui-form--inline">
+                            <input type="hidden" name="linkdelid" value={{linkid}} />
+                            <button type="submit" class="mui-btn mui-btn--danger mui-btn--small">X</button>
+                        </form>
                         {{#if title}}
                             <a href={{url}} class="groupLink">{{title}}</a>
                         {{else}}

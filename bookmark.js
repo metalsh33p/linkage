@@ -4,31 +4,29 @@ var express = require('express'),
     shortid = require('shortid'),
     xkcdPassword = require('xkcd-password'),
     compression = require('compression'),
+    nodemailer = require('nodemailer'),
     sqlite3 = require('sqlite3').verbose();
 
-// Error Checks
-var newGroupError = false;
-var newLinkError = false;
-
+// Begin Express
 var app = express();
-
 app.use(compression());
 
-// set up handlebars view engine
-var handlebars = require('express-handlebars').create({
-  defaultLayout:'main',
-  helpers: {
-    section: function(name, options){
-      if(!this._sections) this._sections = {};
-      this._sections[name] = options.fn(this);
-      return null;
-    }
-  }
-});
+// Error Checks
+var newGroupError = false,
+    newLinkError = false,
+    validEmail = true;
+
+// Set up page id options
+var longId = new xkcdPassword(),
+    idOptions = {
+        numWords: 3,
+        minLength: 3,
+        maxLength: 8,
+        separator: '_'
+    };
 
 // set up sqlite3 database
 var file = "master.db";
-console.log('starting database');
 var db = new sqlite3.Database(file);
 db.serialize(function(){
     db.run("PRAGMA foreign_keys = true", function(err) {
@@ -43,6 +41,27 @@ db.serialize(function(){
     db.run("CREATE TABLE IF NOT EXISTS link (linkid TEXT PRIMARY KEY, title TEXT, url TEXT, linksession TEXT, FOREIGN KEY(linksession) REFERENCES session (sessionid) )", function(err) {
         sqliteErrCheck(err, 'CREATE', 'link');
     });
+});
+
+// Set up nodemailer
+var mailTransport = nodemailer.createTransport('SMTP',{
+    service: 'Hotmail',
+    auth: {
+        user: process.env.MAIL_USER,
+        pass: process.env.MAIL_PASS,
+    }
+});
+
+// set up handlebars view engine
+var handlebars = require('express-handlebars').create({
+  defaultLayout:'main',
+  helpers: {
+    section: function(name, options){
+      if(!this._sections) this._sections = {};
+      this._sections[name] = options.fn(this);
+      return null;
+    }
+  }
 });
 
 app.engine('handlebars', handlebars.engine);
@@ -92,29 +111,13 @@ app.use(express.static(__dirname + '/public'));
 
 app.use(require('body-parser').urlencoded({ extended: true }));
 
-// Set up MongoDB connection
-var opts = {
-  server: {
-    socketOptions: { keepAlive: 1 }
-  }
-};
-
 app.get('/', function(req, res){
-    var longId = new xkcdPassword();
-    var idOptions = {
-        numWords: 3,
-        minLength: 3,
-        maxLength: 8,
-        separator: '_'
-    };
     longId.generate(idOptions, function(err, result){
-        console.log('pageid: ' + result.join('_'));
         res.render('home', { pageid: result.join('_'), newsite: true });
     });
 });
 
 app.get('/:pageid', function(req, res){
-    console.log('in get pageid');
     var context = {};
     var pageId = req.params.pageid;
     var groups = [];
@@ -123,7 +126,6 @@ app.get('/:pageid', function(req, res){
     db.serialize(function() {
         db.all("SELECT sessionid, title, desc FROM session WHERE sessionpage = (?)", pageId, function(err, rows){
             if (rows) {
-                console.log('rows found');
                 for(var i = 0; i < rows.length; i++) {
                     var group = {
                         title: rows[i].title,
@@ -134,7 +136,7 @@ app.get('/:pageid', function(req, res){
                     groupIds.push(group.id);
                     groups.push(group);
                 }
-                var stmt = "SELECT title, url, linksession FROM link WHERE linksession IN (\'" + groupIds.join('\',\'') + "\')";
+                var stmt = "SELECT linkid, title, url, linksession FROM link WHERE linksession IN (\'" + groupIds.join('\',\'') + "\')";
                 db.all(stmt, function(err, rows){
                     if(rows) {
                         for(var j = 0; j < groups.length; j++) {
@@ -148,7 +150,8 @@ app.get('/:pageid', function(req, res){
                                     }
                                     var link = {
                                         title: linkTitle,
-                                        url: rows[k].url
+                                        url: rows[k].url,
+                                        linkid: rows[k].linkid,
                                     };
                                     groups[j].links.push(link);
                                 }
@@ -170,16 +173,13 @@ app.get('/:pageid', function(req, res){
 
 app.post('/:pageid/newsession', function(req, res){
 
-    console.log('starting new session route');
-
-    // var sessions = []; Can delete?
-
     var newSessionId = shortid.generate();
 
     var rowPageId = req.params.pageid;
-    console.log(JSON.stringify(req.body, null, 4));
 
-    if (!req.body.grouptitle) {
+    var validTitle = /\S/.test(req.body.grouptitle);
+
+    if (!validTitle) {
         newGroupError = true;
         res.redirect(303, '/' + rowPageId);
     } else {
@@ -209,8 +209,6 @@ app.post('/:pageid/newsession', function(req, res){
 
 app.post('/:pageid/:sessionid/addlink', function(req, res){
 
-    // var sessions = []; Can delete?
-
     var newLinkId = shortid.generate();
 
     var validURL = /\S/.test(req.body.newlinkurl);
@@ -221,7 +219,6 @@ app.post('/:pageid/:sessionid/addlink', function(req, res){
         res.redirect(303, '/' + req.params.pageid);
     } else {
         if (!validHTTP) {
-            console.log('INVALID HTTP');
             req.body.newlinkurl = "http://" + req.body.newlinkurl;
         }
 
@@ -235,6 +232,36 @@ app.post('/:pageid/:sessionid/addlink', function(req, res){
     }
 
 });
+
+app.post('/:pageid/sendlink', function(req, res){
+
+    var emailString = req.body.emails;
+    var lastCommaPos = 0;
+    var i = 0;
+
+    while (validEmail && i < emailString.length) {
+        if (emailString.charAt(i) === ',') {
+            validEmail = /@/.test(emailString.substring(lastCommaPos, i));
+            lastCommaPos = i;
+        }
+        i++;
+    }
+
+    if (!validEmail) {
+        res.redirect(303, '/' + req.params.pageid); 
+    } else {
+        mailTransport.sendMail({
+            from: '"Linkage - DO NOT REPLY" <do-not-reply@linkage.io>',
+            to: emailString,
+            subject: 'Linkage URL - Access the collection!',
+            text: req.protocol + '://' + req.hostname + '/' + req.params.pageid
+        }, function(err){
+            if (err) console.error ( 'Unable to send email: ' + err );
+            validEmail = false;
+            res.redirect(303, '/' + req.params.pageid);
+        });
+    }
+})
 
 // custom 404 page
 app.use(function(req, res){
@@ -299,8 +326,6 @@ function renderHomeContext(groups, pageId){
 
     var groupColumns = [columnOne, columnTwo, columnThree];
 
-    console.log(groupColumns);
-
     var context = {
         groupcolumns: groupColumns,
         pageid: pageId,
@@ -316,5 +341,9 @@ function renderHomeContext(groups, pageId){
         newLinkError = false;
     }
 
+    if (!validEmail) {
+        context.emailerror = true;
+        validEmail = true;
+    }
     return context;
 }
