@@ -264,7 +264,6 @@ app.post('/:pageid/:sessionid/deletegroup', function(req, res){
 });
 
 app.post('/:pageid/:sessionid/deletelink', function(req, res){
-    console.log('in delete link sessionid: ' + req.params.sessionid + ' linkid: ' + req.body.linkid);
     db.serialize(function() {
         db.run("DELETE FROM link WHERE linkid = (?) AND linksession = (?)", [ req.body.linkdelid, req.params.sessionid ], function(err) {
             editCollection = true;
