@@ -118,6 +118,14 @@ app.get('/', function(req, res){
     });
 });
 
+app.get('/examples', function(req, res) {
+    res.render('examples');
+});
+
+app.get('/faqs', function(req, res) {
+    res.render('faqs');
+});
+
 app.get('/:pageid', function(req, res){
     var context = {};
     var pageId = req.params.pageid;
@@ -293,7 +301,7 @@ app.post('/:pageid/sendlink', function(req, res){
             res.redirect(303, '/' + req.params.pageid);
         });
     }
-})
+});
 
 // custom 404 page
 app.use(function(req, res){
@@ -331,7 +339,6 @@ function sqliteErrCheck(err, tableAction, tableName){
 
 function renderHomeContext(groups, pageId){
 
-    // var rowCount = 0;
     var columnOne = [];
     var columnTwo = [];
     var columnThree = [];

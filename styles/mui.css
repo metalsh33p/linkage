@@ -422,7 +422,6 @@ textarea {
   font-size: inherit;
   line-height: inherit;
 }
-
 a {
   color: #fff;
   text-decoration: none;
@@ -569,7 +568,7 @@ abbr[title] {
   text-transform: uppercase;
   color: rgba(0, 0, 0, 0.87);
   background-color: #FFF;
-  transition: all 0.2s ease-in-out;
+  /*transition: all 0.2s ease-in-out;*/
   display: inline-block;
   height: 36px;
   padding: 0 26px;
@@ -2069,7 +2068,7 @@ th {
 
 .mui--text-center {
   text-align: center !important;
-}
+}  
 
 .mui--text-justify {
   text-align: justify !important;

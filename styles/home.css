@@ -10,12 +10,15 @@
 .newGrpInput {
     margin-right: 1.5em;
 }
-.groupLink {
+.group-link {
     color: #2196F3;
 }
 .truncate {
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+    display: block;
 }
 .wrap {
     word-wrap: break-word;
@@ -48,13 +51,27 @@
   text-decoration: none;
   color: #ffffff;
 }
-#intro-link {
-  text-decoration: none;
-  color: #2196F3;
+.nodec-link {
+  text-decoration: none !important;
+  color: #2196F3 !important;
 }
 #email-field {
     width: 85%;
 }
-.delete-link { 
+/*.delete-link { 
     margin-top: 10px !important;
+}*/
+.example-image {
+    display: block;
+    margin: 0px auto;
+    width: 75%;
+    height: 75%;
+}
+.faq-divider {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+.question-divider {
+    margin-top: 10px;
+    margin-bottom: 10px;
 }

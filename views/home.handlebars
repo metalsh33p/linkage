@@ -12,6 +12,11 @@
             </div>
             <button type="submit" class="mui-btn" id="add-group">Add Group</button>
         </form>
+        {{#if newsite}}
+            <div class="delete-link mui--text-center">Heads up, anyone with the link to your collection
+                can view and edit your links! Don't enter any personal links or info!
+            </div>
+        {{/if}}
         {{#if newgrouperror}}
             <div class="error-text mui--text-subhead">Title required for new group</div>
         {{/if}}
@@ -75,23 +80,25 @@
                 {{/if}}
                 {{#each links}}
                     {{#if ../../../editcollection}}
-                        <div class="truncate">
+                        <div>
                             <form action="/{{../../../pageid}}/{{../id}}/deletelink" method="POST" class="mui-form--inline">
                                 <input type="hidden" name="linkdelid" value={{linkid}} />
-                                <button type="submit" class="mui-btn mui-btn--small mui-btn--fab mui-btn--danger delete-link" aria-label="Delete Link">X</button>
-                                {{#if title}}
-                                    <a href={{url}} class="groupLink">{{title}}</a>
-                                {{else}}
-                                    <a href={{url}} class="groupLink">{{url}}</a>
-                                {{/if}}
+                                <div class="truncate delete-link">
+                                    <button type="submit" class="mui-btn mui-btn--small mui-btn--danger mui--text-center mui--text-subhead" aria-label="Delete Link">X</button>
+                                    {{#if title}}
+                                        <a href={{url}} class="group-link mui--align-middle">{{title}}</a>
+                                    {{else}}
+                                        <a href={{url}} class="group-link mui--align-middle">{{url}}</a>
+                                    {{/if}}
+                                </div>
                             </form>
                         </div>
                     {{else}}
-                        <div class="truncate">
+                        <div>
                             {{#if title}}
-                                <a href={{url}} class="groupLink">{{title}}</a>
+                                <a href={{url}} class="group-link truncate">{{title}}</a>
                             {{else}}
-                                <a href={{url}} class="groupLink">{{url}}</a>
+                                <a href={{url}} class="group-link truncate">{{url}}</a>
                             {{/if}}
                         </div>
                     {{/if}}
