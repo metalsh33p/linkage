@@ -129,6 +129,7 @@ app.get('/faqs', function(req, res) {
 app.get('/:pageid', function(req, res){
     var context = {};
     var pageId = req.params.pageid;
+    var collectionURL = req.protocol + '://' + req.hostname + '/' + req.params.pageid;
     var groups = [];
     var groupIds = [];
 
@@ -166,10 +167,10 @@ app.get('/:pageid', function(req, res){
                                 }
                             }
                         }
-                        context = renderHomeContext(groups, pageId);
+                        context = renderHomeContext(groups, pageId, collectionURL);
                         res.render('home', context);
                     } else {
-                        context = renderHomeContext(groups, pageId);
+                        context = renderHomeContext(groups, pageId, collectionURL);
                         res.render('home', context);
                     }
                 });
@@ -337,7 +338,7 @@ function sqliteErrCheck(err, tableAction, tableName){
     }
 }
 
-function renderHomeContext(groups, pageId){
+function renderHomeContext(groups, pageId, collectionURL){
 
     var columnOne = [];
     var columnTwo = [];
@@ -368,6 +369,7 @@ function renderHomeContext(groups, pageId){
     var context = {
         groupcolumns: groupColumns,
         pageid: pageId,
+        collectionurl: collectionURL,
     };
 
     if (newGroupError) {

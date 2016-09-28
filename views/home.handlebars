@@ -1,4 +1,20 @@
 <div class="mui-col-md-12 mui-col-xs-12">
+    {{#if groupcolumns}}
+        <div class="mui-col-md-offset-3 mui-col-md-6 mui-panel">
+            <div class="mui--text-headline mui--text-center">Your collection link is:</div>
+            <div class="mui--text-center"><a href={{collectionurl}} class="nodec-link mui--text-subhead">{{collectionurl}}</a></div>
+            <form action="/{{pageid}}/sendlink" method="POST" class="mui-form--inline">
+                <div class="mui-textfield" id="email-field">
+                    <label id="email_label">Email your collection</label>
+                    <input type="text" name="emails" aria-labelledby="email_label" placeholder="Separate multiple emails with a ','" />
+                </div>
+                <button type="submit" class="mui-btn mui-btn--small" id="email-link">Send</button>
+            </form>
+        {{#if emailerror}}
+            <div class="error-text">Error sending- verify email(s)</div>
+        {{/if}}
+        </div>
+    {{/if}}
     <div class="mui-col-md-offset-3 mui-col-md-6 mui-panel">
         <form action="/{{pageid}}/newsession" method="POST" class="mui-form--inline">
             <legend>Create New Group</legend>
@@ -21,20 +37,6 @@
             <div class="error-text mui--text-subhead">Title required for new group</div>
         {{/if}}
     </div>
-    {{#if groupcolumns}}
-        <div class="mui-col-md-offset-3 mui-col-md-6 mui-panel">
-            <form action="/{{pageid}}/sendlink" method="POST" class="mui-form--inline">
-                <div class="mui-textfield" id="email-field">
-                    <label id="email_label">Email your collection</label>
-                    <input type="text" name="emails" aria-labelledby="email_label" placeholder="Separate multiple emails with a ','" />
-                </div>
-                <button type="submit" class="mui-btn mui-btn--small" id="email-link">Send</button>
-            </form>
-        {{#if emailerror}}
-            <div class="error-text">Error sending- verify email(s)</div>
-        {{/if}}
-        </div>
-    {{/if}}
 </div>
 <div class="mui-divider mui-col-md-12 mui-col-xs-12" id="group-divider"></div>
 {{#if groupcolumns}}

@@ -22,6 +22,6 @@ if(cluster.isMaster){
 
 } else {
 
-  require('./bookmark.js');
+  require('./linkage.js');
 
 }
