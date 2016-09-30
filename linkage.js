@@ -5,6 +5,7 @@ var express = require('express'),
     xkcdPassword = require('xkcd-password'),
     compression = require('compression'),
     nodemailer = require('nodemailer'),
+    credentials = require('./credentials.js'),
     sqlite3 = require('sqlite3').verbose();
 
 // Begin Express
@@ -43,13 +44,13 @@ db.serialize(function(){
         sqliteErrCheck(err, 'CREATE', 'link');
     });
 });
-
+console.log(credentials.MAIL_USER + ' ' + credentials.MAIL_PASS);
 // Set up nodemailer
 var mailTransport = nodemailer.createTransport('SMTP',{
     service: 'Hotmail',
     auth: {
-        user: process.env.MAIL_USER,
-        pass: process.env.MAIL_PASS,
+        user: credentials.MAIL_USER,
+        pass: credentials.MAIL_PASS,
     }
 });
 
@@ -296,8 +297,10 @@ app.post('/:pageid/sendlink', function(req, res){
             subject: 'Linkage URL - Access the collection!',
             text: req.protocol + '://' + req.hostname + '/' + req.params.pageid
         }, function(err){
-            if (err) console.error ( 'Unable to send email: ' + err );
-            validEmail = false;
+            if (err) {
+                console.error ( 'Unable to send email: ' + err );
+                validEmail = false;
+            }
             res.redirect(303, '/' + req.params.pageid);
         });
     }
