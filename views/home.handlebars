@@ -2,7 +2,7 @@
     {{#if groupcolumns}}
         <div class="mui-col-md-offset-3 mui-col-md-6 mui-panel">
             <div class="mui--text-headline mui--text-center">Your collection link is:</div>
-            <div class="mui--text-center"><a href={{collectionurl}} class="nodec-link mui--text-subhead">{{collectionurl}}</a></div>
+            <div class="mui--text-center"><a href={{collectionurl}} class="nodec-link mui--text-subhead" id="your-link">{{collectionurl}}</a></div>
             <form action="/{{pageid}}/sendlink" method="POST" class="mui-form--inline">
                 <div class="mui-textfield" id="email-field">
                     <label id="email_label">Email your collection</label>
