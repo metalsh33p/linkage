@@ -44,10 +44,11 @@
         <form action="/{{pageid}}/editcollection" method="POST">
             {{#if editcollection}}
                 <input type="hidden" name="editsdone" value="true">
+                <button type="submit" class="mui-btn mui-btn--danger mui-btn--small">{{editcollectiontext}}</button>
             {{else}}
                 <input type="hidden" name="editsdone" value="false">
+                <button type="submit" class="mui-btn mui-btn--primary mui-btn--small">{{editcollectiontext}}</button>
             {{/if}}
-            <button type="submit" class="mui-btn mui-btn--primary mui-btn--small">{{editcollectiontext}}</button>
         </form>
     </div>
 {{/if}}
@@ -57,7 +58,7 @@
 {{#each groupcolumns}}
     <div class="mui-col-md-4">
         {{#each this}}
-            <div class="mui-panel link-panel">
+            <div class="mui-panel link-panel" id={{id}}>
                 {{#if ../../editcollection}}
                     <form action="/{{../../pageid}}/{{id}}/deletegroup" method="POST" class="mui-form--inline">
                         <input type="hidden" name="linkgroupid" value={{id}} />

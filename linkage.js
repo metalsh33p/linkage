@@ -6,7 +6,9 @@ var express = require('express'),
     compression = require('compression'),
     nodemailer = require('nodemailer'),
     credentials = require('./credentials.js'),
-    sqlite3 = require('sqlite3').verbose();
+    sqlite3 = require('sqlite3').verbose(),
+    https = require('https'),
+    http = require('http');
 
 // Begin Express
 var app = express();
@@ -44,7 +46,7 @@ db.serialize(function(){
         sqliteErrCheck(err, 'CREATE', 'link');
     });
 });
-console.log(credentials.MAIL_USER + ' ' + credentials.MAIL_PASS);
+
 // Set up nodemailer
 var mailTransport = nodemailer.createTransport('SMTP',{
     service: 'Hotmail',
@@ -127,7 +129,8 @@ app.get('/faqs', function(req, res) {
     res.render('faqs');
 });
 
-app.get('/:pageid', function(req, res){
+app.get('/:pageid', function(req, res, next){
+    
     var context = {};
     var pageId = req.params.pageid;
     var collectionURL = req.protocol + '://' + req.hostname + '/' + req.params.pageid;
@@ -228,25 +231,34 @@ app.post('/:pageid/newsession', function(req, res){
 app.post('/:pageid/:sessionid/addlink', function(req, res){
 
     var newLinkId = shortid.generate();
+    var newLinkURL;
 
     var validURL = /\S/.test(req.body.newlinkurl);
     var validHTTP = /^[hH][tT][tT][pP][sS]*\:\/\//.test(req.body.newlinkurl);
+
+    var emptyTitle = /\s*/.test(req.body.newlinktitle);
+
+    if (!validHTTP) {
+        newLinkURL = "http://" + req.body.newlinkurl;
+    } else {
+        newLinkURL = req.body.newlinkurl;
+    }
 
     if (!validURL) {
         newLinkError = true;
         res.redirect(303, '/' + req.params.pageid);
     } else {
-        if (!validHTTP) {
-            req.body.newlinkurl = "http://" + req.body.newlinkurl;
-        }
-
         db.serialize(function() {
 
-            db.run("INSERT INTO link VALUES (?, ?, ?, ?)", [ newLinkId, req.body.newlinktitle, req.body.newlinkurl, req.params.sessionid ]);
-
+            if (emptyTitle) {
+                getPageTitle(res, req.params.pageid, newLinkId, newLinkURL, req.params.sessionid);
+            } else {
+                db.run("INSERT INTO link VALUES (?, ?, ?, ?)", [ newLinkId, req.body.newlinktitle, newLinkURL, req.params.sessionid ]);
+                res.redirect(303, '/' + req.params.pageid + '#' + req.params.sessionid);
+            }
+            
         });
 
-        res.redirect(303, '/' + req.params.pageid);
     }
 
 });
@@ -398,4 +410,54 @@ function renderHomeContext(groups, pageId, collectionURL){
     }
 
     return context;
+}
+
+function getPageTitle(mainRes, pageID, linkID, url, sessionID){
+    
+    var urlRegex = /[\S]*\.[\w]*[^\/\s]/i,
+        urlArray = urlRegex.exec(url),
+        pathRegex = /(?:[\w])(\/[\S]*)/i,
+        pathArray = pathRegex.exec(url);
+
+    var siteTitleRegex = /\<title>([\s\S]*)\<\/title>/,
+        siteTitleArray = [],
+        siteTitle = '',
+        data = [];
+
+    var options = {
+        host: JSON.stringify(urlArray[0]),
+        path: JSON.stringify(pathArray[1]),
+        method: 'GET',
+    };
+    try {
+        http.get(url, function(res){
+            res.on('data', function(chunk) {
+                data.push(chunk);
+            }).on('end', function(){
+                data = Buffer.concat(data).toString();
+                siteTitleArray = siteTitleRegex.exec(data);
+                siteTitle = siteTitleArray[1];
+                db.run("INSERT INTO link VALUES (?, ?, ?, ?)", [ linkID, siteTitle, url, sessionID ]);
+                mainRes.redirect(303, '/' + pageID + '#' + sessionID);
+            });
+        }).end();
+    } catch (error) {
+        try {
+            https.get(url, function(res){
+                res.on('data', function(chunk) {
+                    data.push(chunk);
+                }).on('end', function(){
+                    data = Buffer.concat(data).toString();
+                    siteTitleArray = siteTitleRegex.exec(data);
+                    siteTitle = siteTitleArray[1];
+                    db.run("INSERT INTO link VALUES (?, ?, ?, ?)", [ linkID, siteTitle, url, sessionID ]);
+                    mainRes.redirect(303, '/' + pageID + '#' + sessionID);
+                });
+            }).end();
+        } catch (error) {
+            db.run("INSERT INTO link VALUES (?, ?, ?, ?)", [ linkID, siteTitle, url, sessionID ]);
+            mainRes.redirect(303, '/' + pageID + '#' + sessionID);
+        }
+    }
+
 }
