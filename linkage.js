@@ -192,32 +192,45 @@ app.post('/:pageid/editcollection', function(req, res){
     res.redirect(303, '/' + req.params.pageid)
 });
 
+//Create new link group
 app.post('/:pageid/newsession', function(req, res){
 
-    var newSessionId = shortid.generate();
-
-    var rowPageId = req.params.pageid;
+    var newGroupId = shortid.generate(),
+        rowPageId = req.params.pageid
+        newGroupTitle = req.body.grouptitle,
+        newGroupDesc = req.body.groupdesc;
 
     var validTitle = /\S/.test(req.body.grouptitle);
 
     if (!validTitle) {
         newGroupError = true;
-        res.redirect(303, '/' + rowPageId);
+        if(req.xhr || req.accepts('json,html') === 'json') {
+            res.send({ error: 'Group Title is required' });
+        } else {
+            res.redirect(303, '/' + rowPageId);
+        }
     } else {
         db.serialize(function() {
 
             db.get("SELECT pageid FROM page WHERE pageid = (?)", [req.params.pageid], function(err, row){
                 if (row) {
-                    db.run("INSERT INTO session VALUES (?, ?, ?, ?)", [ newSessionId, req.body.grouptitle, req.body.groupdesc, rowPageId ], function(err){
+                    db.run("INSERT INTO session VALUES (?, ?, ?, ?)", [ newGroupId, newGroupTitle, newGroupDesc, rowPageId ], function(err){
                         sqliteErrCheck(err, 'INSERT', 'session');
-                        res.redirect(303, '/' + rowPageId);
+                        if (req.xhr || req.accepts('json,html') === 'json') {
+                            res.send({ groupid: newGroupId, 
+                                       pageid: rowPageId,
+                                       grouptitle: newGroupTitle,
+                                       groupdesc: newGroupDesc });
+                        } else {
+                            res.redirect(303, '/' + rowPageId);
+                        }
                     });
                 } else {
                     db.serialize(function() {
                         db.run("INSERT INTO page VALUES (?, ?)", [ rowPageId, req.url ], function(err) {
                             sqliteErrCheck(err, 'INSERT', 'page');
                         });
-                        db.run("INSERT INTO session VALUES (?, ?, ?, ?)", [ newSessionId, req.body.grouptitle, req.body.groupdesc, rowPageId ], function(err){
+                        db.run("INSERT INTO session VALUES (?, ?, ?, ?)", [ newGroupId, newGroupTitle, newGroupDesc, rowPageId ], function(err){
                             sqliteErrCheck(err, 'INSERT', 'session');
                             res.redirect(303, '/' + rowPageId);
                         });
@@ -228,6 +241,7 @@ app.post('/:pageid/newsession', function(req, res){
     }
 });
 
+//Add new link
 app.post('/:pageid/:sessionid/addlink', function(req, res){
 
     var newLinkId = shortid.generate();
@@ -236,7 +250,7 @@ app.post('/:pageid/:sessionid/addlink', function(req, res){
     var validURL = /\S/.test(req.body.newlinkurl);
     var validHTTP = /^[hH][tT][tT][pP][sS]*\:\/\//.test(req.body.newlinkurl);
 
-    var emptyTitle = /\s*/.test(req.body.newlinktitle);
+    var hasTitle = /[\s\S]*/.test(req.body.newlinktitle);
 
     if (!validHTTP) {
         newLinkURL = "http://" + req.body.newlinkurl;
@@ -246,15 +260,28 @@ app.post('/:pageid/:sessionid/addlink', function(req, res){
 
     if (!validURL) {
         newLinkError = true;
-        res.redirect(303, '/' + req.params.pageid);
+        if(req.xhr || req.accepts('json,html') === 'json') {
+            newLinkError = false;
+            res.send({ error: 'URL is required' });
+        } else {
+            res.redirect(303, '/' + req.params.pageid);
+        }
     } else {
         db.serialize(function() {
-
-            if (emptyTitle) {
+    
+            if (!hasTitle) {
                 getPageTitle(res, req.params.pageid, newLinkId, newLinkURL, req.params.sessionid);
             } else {
                 db.run("INSERT INTO link VALUES (?, ?, ?, ?)", [ newLinkId, req.body.newlinktitle, newLinkURL, req.params.sessionid ]);
-                res.redirect(303, '/' + req.params.pageid + '#' + req.params.sessionid);
+                if (req.xhr || req.accepts('json,html') === 'json') {
+                    // if(err) {
+                    //     res.send({ error: 'Error inserting new link' });
+                    // } else {
+                    res.send({ newURL: newLinkURL, newLinkTitle: req.body.newlinktitle });
+                    // }
+                } else {
+                    res.redirect(303, '/' + req.params.pageid + '#' + req.params.sessionid);
+                }
             }
             
         });
@@ -263,6 +290,7 @@ app.post('/:pageid/:sessionid/addlink', function(req, res){
 
 });
 
+//Delete link group
 app.post('/:pageid/:sessionid/deletegroup', function(req, res){
     
     db.serialize(function() {
@@ -276,6 +304,7 @@ app.post('/:pageid/:sessionid/deletegroup', function(req, res){
 
 });
 
+//Delete link from group
 app.post('/:pageid/:sessionid/deletelink', function(req, res){
     db.serialize(function() {
         db.run("DELETE FROM link WHERE linkid = (?) AND linksession = (?)", [ req.body.linkdelid, req.params.sessionid ], function(err) {
@@ -286,6 +315,7 @@ app.post('/:pageid/:sessionid/deletelink', function(req, res){
     
 })
 
+//Email page link
 app.post('/:pageid/sendlink', function(req, res){
 
     var emailString = req.body.emails;
@@ -371,7 +401,7 @@ function renderHomeContext(groups, pageId, collectionURL){
                 colSelector++;
                 break;
 
-            case 2:
+            case 2: 
                 columnThree.push(groups[i]);
                 colSelector = 0;
                 break;
@@ -408,6 +438,8 @@ function renderHomeContext(groups, pageId, collectionURL){
     } else {
         context.editcollectiontext = "Edit Collection";
     }
+
+    context.pageredirected = true;
 
     return context;
 }

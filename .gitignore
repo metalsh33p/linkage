@@ -8,4 +8,6 @@ master.db
 gulpfile.js
 jsconfig.json
 resource.json
+credentials.js
 .vscode
+scraps.txt

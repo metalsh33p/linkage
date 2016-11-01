@@ -24,6 +24,15 @@ gulp.task('minify-css', function() {
 
 });
 
+gulp.task('save-js', function() {
+
+    del( ['public/js/*'] );
+
+    return gulp.src('scripts/*.js')
+        .pipe(gulp.dest('public/js'));
+
+})
+
 gulp.task('watch', function () {
     gulp.watch('styles/*.css', ['minify-css']);
 });
