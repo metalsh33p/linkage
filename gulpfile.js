@@ -35,4 +35,5 @@ gulp.task('save-js', function() {
 
 gulp.task('watch', function () {
     gulp.watch('styles/*.css', ['minify-css']);
+    gulp.watch('scripts/main.js', ['save-js']);
 });

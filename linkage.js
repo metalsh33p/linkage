@@ -29,6 +29,9 @@ var longId = new xkcdPassword(),
         separator: '_'
     };
 
+// Global Vars
+var urlHostRegex = /[hH][tT][tT][pP][sS]*\:\/\//g;
+
 // set up sqlite3 database
 var file = "master.db";
 var db = new sqlite3.Database(file);
@@ -89,7 +92,7 @@ app.use(function(req, res, next){
       var worker = require('cluster').worker;
       if(worker) worker.disconnect();
 
-      server.close();
+    //   server.close();
       db.close();
 
       try {
@@ -200,7 +203,7 @@ app.post('/:pageid/newsession', function(req, res){
         newGroupTitle = req.body.grouptitle,
         newGroupDesc = req.body.groupdesc;
 
-    var validTitle = /\S/.test(req.body.grouptitle);
+    var validTitle = /\S/g.test(req.body.grouptitle);
 
     if (!validTitle) {
         newGroupError = true;
@@ -247,10 +250,11 @@ app.post('/:pageid/:sessionid/addlink', function(req, res){
     var newLinkId = shortid.generate();
     var newLinkURL;
 
-    var validURL = /\S/.test(req.body.newlinkurl);
-    var validHTTP = /^[hH][tT][tT][pP][sS]*\:\/\//.test(req.body.newlinkurl);
+    req.body.newlinkurl.replace(/\s/g,'');
+    var validURL = /\S/g.test(req.body.newlinkurl);
+    var validHTTP = urlHostRegex.test(req.body.newlinkurl);
 
-    var hasTitle = /[\s\S]*/.test(req.body.newlinktitle);
+    var hasTitle = /[\S]/g.test(req.body.newlinktitle);
 
     if (!validHTTP) {
         newLinkURL = "http://" + req.body.newlinkurl;
@@ -268,7 +272,6 @@ app.post('/:pageid/:sessionid/addlink', function(req, res){
         }
     } else {
         db.serialize(function() {
-    
             if (!hasTitle) {
                 getPageTitle(res, req.params.pageid, newLinkId, newLinkURL, req.params.sessionid);
             } else {
@@ -277,7 +280,7 @@ app.post('/:pageid/:sessionid/addlink', function(req, res){
                     // if(err) {
                     //     res.send({ error: 'Error inserting new link' });
                     // } else {
-                    res.send({ newURL: newLinkURL, newLinkTitle: req.body.newlinktitle });
+                    res.send({ newURL: newLinkURL, newLinkTitle: req.body.newlinktitle, newLinkId: newLinkId });
                     // }
                 } else {
                     res.redirect(303, '/' + req.params.pageid + '#' + req.params.sessionid);
@@ -309,7 +312,14 @@ app.post('/:pageid/:sessionid/deletelink', function(req, res){
     db.serialize(function() {
         db.run("DELETE FROM link WHERE linkid = (?) AND linksession = (?)", [ req.body.linkdelid, req.params.sessionid ], function(err) {
             editCollection = true;
-            res.redirect(303, '/' + req.params.pageid);
+            if (req.xhr || req.accepts('json,html') === 'json') {
+                // if(err) {
+                //     res.send({ error: 'Error inserting new link' });
+                // } else {
+                res.send({ error: false, });
+            } else {
+                res.redirect(303, '/' + req.params.pageid);
+            }
         });
     });
     
@@ -445,11 +455,13 @@ function renderHomeContext(groups, pageId, collectionURL){
 }
 
 function getPageTitle(mainRes, pageID, linkID, url, sessionID){
-    
-    var urlRegex = /[\S]*\.[\w]*[^\/\s]/i,
-        urlArray = urlRegex.exec(url),
-        pathRegex = /(?:[\w])(\/[\S]*)/i,
-        pathArray = pathRegex.exec(url);
+    console.log('in url: ' + url);
+    var urlArray = urlHostRegex.exec(url);
+
+    console.log(urlArray);
+
+    var urlHost = urlArray[0],
+        urlPath = url.substring(urlHost.length); 
 
     var siteTitleRegex = /\<title>([\s\S]*)\<\/title>/,
         siteTitleArray = [],
@@ -457,23 +469,36 @@ function getPageTitle(mainRes, pageID, linkID, url, sessionID){
         data = [];
 
     var options = {
-        host: JSON.stringify(urlArray[0]),
-        path: JSON.stringify(pathArray[1]),
+        host: urlHost,
+        path: urlPath,
         method: 'GET',
     };
+
     try {
+        var responseErr;
         http.get(url, function(res){
-            res.on('data', function(chunk) {
-                data.push(chunk);
-            }).on('end', function(){
-                data = Buffer.concat(data).toString();
-                siteTitleArray = siteTitleRegex.exec(data);
-                siteTitle = siteTitleArray[1];
-                db.run("INSERT INTO link VALUES (?, ?, ?, ?)", [ linkID, siteTitle, url, sessionID ]);
-                mainRes.redirect(303, '/' + pageID + '#' + sessionID);
-            });
+            console.log('response: ' + res.statusCode);
+            if(res.statusCode == 301) {
+                responseErr = true;;
+            } else {
+                res.on('data', function(chunk) {
+                    data.push(chunk); 
+                }).on('end', function(){
+                    data = Buffer.concat(data).toString();
+                    console.log('data: ' + data);
+                    siteTitleArray = siteTitleRegex.exec(data);
+                    siteTitle = siteTitleArray[1];
+                    db.run("INSERT INTO link VALUES (?, ?, ?, ?)", [ linkID, siteTitle, url, sessionID ]);
+                    mainRes.redirect(303, '/' + pageID + '#' + sessionID);
+                });
+            }
         }).end();
+        if (responseErr) {
+            console.log('throwing error');
+            throw responseErr;
+        }
     } catch (error) {
+        console.log('caught error');
         try {
             https.get(url, function(res){
                 res.on('data', function(chunk) {
